@@ -1,8 +1,10 @@
 import flet as ft
 from alert import AlertManager
 from autonoleggio import Autonoleggio
+from datetime import datetime
 from flet import Row
 
+data = datetime.now().date()
 FILE_AUTO = "automobili.csv"
 
 def main(page: ft.Page):
@@ -27,11 +29,10 @@ def main(page: ft.Page):
     txt_responsabile = ft.Text(
         value=f"Responsabile: {autonoleggio.responsabile}",
         size=16,
-        weight=ft.FontWeight.BOLD
-    )
+        weight=ft.FontWeight.BOLD)
 
     # TextField per responsabile
-    input_responsabile = ft.TextField(value=autonoleggio.responsabile, label="Responsabile")
+    input_responsabile = ft.TextField( label="Responsabile")
 
     # ListView per mostrare la lista di auto aggiornata
     lista_auto = ft.ListView(expand=True, spacing=5, padding=10, auto_scroll=True)
@@ -40,8 +41,13 @@ def main(page: ft.Page):
     input_marca = ft.TextField(label = 'Marca')
     input_modello = ft.TextField(label='Modello')
     input_anno = ft.TextField(label='Anno')
-    #input_posti = ft.TextField(label='Posti')
-    counterTextField = ft.TextField(width=100, text_size=24,
+
+    # Tutti i TextField per le info necessarie per il noleggio di un automobile
+    input_idAuto = ft.TextField(label='Codice univoco automobile')
+    input_cognomeCliente = ft.TextField(label='Cognome del cliente')
+
+    # ------------------------------------------Costruzione del counter ------------------------------------------------
+    counterTextField = ft.TextField(label = 'Posti',width=100, text_size=24,
                            disabled = True, border_color="green",
                            text_align=ft.TextAlign.CENTER)
     #auto di almeno un posto
@@ -69,7 +75,7 @@ def main(page: ft.Page):
                             on_click=handlerPlus)
     # TODO
 
-    # --- FUNZIONI APP ---
+    # --------------------------------------------- FUNZIONI APP -------------------------------------------------------
     def aggiorna_lista_auto():
         lista_auto.controls.clear()
         for auto in autonoleggio.automobili_ordinate_per_marca():
@@ -77,7 +83,7 @@ def main(page: ft.Page):
             lista_auto.controls.append(ft.Text(f"{stato} {auto}"))
         page.update()
 
-    # --- HANDLERS APP ---
+    # ----------------------------------------- HANDLERS APP -------------------------------------------------------
     def cambia_tema(e):
         page.theme_mode = ft.ThemeMode.DARK if toggle_cambia_tema.value else ft.ThemeMode.LIGHT
         toggle_cambia_tema.label = "Tema scuro" if toggle_cambia_tema.value else "Tema chiaro"
@@ -89,7 +95,7 @@ def main(page: ft.Page):
         input_responsabile.value = ''
         page.update()
 
-    # Handlers per la gestione dei bottoni utili all'inserimento di una nuova auto
+    # Handlers per la gestione dei bottoni utili all'inserimento/noleggio di un auto
     def aggiungi_auto(e):
         try:
             marca, modello, anno, posti = input_marca.value, input_modello.value, input_anno.value, counterTextField.value
@@ -108,15 +114,28 @@ def main(page: ft.Page):
         page.update()
     # TODO
 
-    # --- EVENTI ---
+    def noleggio_automobili(e):
+        try:
+            autonoleggio.nuovo_noleggio(data, input_idAuto.value, input_cognomeCliente.value)
+        except Exception as a:
+            alert.show_alert('Errore: codice univoco automobile non trovato')
+            print(a)
+        aggiorna_lista_auto()
+
+        for campo in [input_idAuto, input_cognomeCliente]:
+            campo.value = ""
+        page.update()
+
+    # ---------------------------------------EVENTI ---------------------------------------------------
+    #bottone per gestire il tema
     toggle_cambia_tema = ft.Switch(label="Tema scuro", value=True, on_change=cambia_tema)
+    #bottone per gestire il responsabile
     pulsante_conferma_responsabile = ft.ElevatedButton("Conferma", on_click=conferma_responsabile)
-
-    # Bottoni per la gestione dell'inserimento di una nuova auto
+    # Bottoni per la gestione dell'inserimento/noleggio di una nuova auto
     pulsante_aggiungi_automobile = ft.ElevatedButton("Aggiungi automobile", on_click=aggiungi_auto)
-    # TODO
+    pulsante_noleggio = ft.ElevatedButton("Avvia noleggio", on_click=noleggio_automobili)
 
-    # --- LAYOUT ---
+    # ---------------------------------------------LAYOUT ---------------------------------------------
     page.add(
         toggle_cambia_tema,
 
@@ -127,7 +146,7 @@ def main(page: ft.Page):
 
         # Sezione 2
         ft.Text("Modifica Informazioni", size=20),
-        ft.Row(spacing=200,
+        ft.Row(spacing=30,
                controls=[input_responsabile, pulsante_conferma_responsabile],
                alignment=ft.MainAxisAlignment.CENTER),
         ft.Divider(),
@@ -135,12 +154,19 @@ def main(page: ft.Page):
         # Sezione 3
         ft.Text(value='Aggiungi nuova automobile', size=20),
         ft.Row(spacing=8,
-               controls=[input_marca, input_modello, input_anno, btnMinus, counterTextField, btnPlus, pulsante_aggiungi_automobile],
+               controls=[input_marca, input_modello, input_anno, btnMinus, counterTextField, btnPlus],
                alignment=ft.MainAxisAlignment.CENTER),
+        ft.Row(controls=[pulsante_aggiungi_automobile], alignment=ft.MainAxisAlignment.CENTER),
         ft.Divider(),
         # TODO
 
-        # Sezione 4
+        #sezione 4 (extra)
+        ft.Text(value='Noleggio', size=20),
+        ft.Row(spacing=30, controls=[input_idAuto, input_cognomeCliente], alignment=ft.MainAxisAlignment.CENTER),
+        ft.Row(controls=[pulsante_noleggio], alignment=ft.MainAxisAlignment.CENTER),
+        ft.Divider(),
+
+        # Sezione 5
         ft.Text("Automobili", size=20),
         lista_auto,
     )
