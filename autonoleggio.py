@@ -43,19 +43,24 @@ class Autonoleggio:
     def aggiungi_automobile(self, marca, modello, anno, num_posti):
         """Aggiunge un'automobile nell'autonoleggio: aggiunge solo nel sistema e non aggiorna il file"""
         # Calcolo codice progressivo
-        if self.automobili:
-            ultimi_codici = []
-            for a in self.automobili:
-                ultimi_codici.append(int(a.codice[1:]))
-            nuovo_id = max(ultimi_codici) + 1
+        if len(str(anno)) == 4:
+
+            if self.automobili:
+                ultimi_codici = []
+                for a in self.automobili:
+                    ultimi_codici.append(int(a.codice[1:]))
+                nuovo_id = max(ultimi_codici) + 1
+            else:
+                nuovo_id = 1
+            codice = f"A{nuovo_id}"
+
+            auto = Automobile(codice, marca, modello, anno, num_posti)
+            self.automobili.append(auto)
+
+            return auto
         else:
-            nuovo_id = 1
-        codice = f"A{nuovo_id}"
-
-        auto = Automobile(codice, marca, modello, anno, num_posti)
-        self.automobili.append(auto)
-
-        return auto
+            raise ValueError(f"Numero di posti o anno non corretto;\n"
+                             f"L'anno deve essere a 4 cifre")
 
     def automobili_ordinate_per_marca(self):
         """Ordina le automobili per marca in ordine alfabetico"""
